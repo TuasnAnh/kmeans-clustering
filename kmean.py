@@ -2,13 +2,15 @@ import pandas as pd
 import numpy as np
 import random as rd
 import matplotlib.pyplot as plt
-from pathlib import Path 
+from pathlib import Path
+
+from sklearn import cluster
 
 pd.options.mode.chained_assignment = None
 
 
 # Global declaration
-outputPath =  Path("./kmean.out.csv")
+outputPath = Path("./kmean.out.csv")
 kCluster = 5
 
 # Extract data from csv file
@@ -22,21 +24,21 @@ plt.scatter(
 )
 plt.xlabel("Annual Income (k$)")
 plt.ylabel("Spending Score (1-100)")
-plt.show()
+# plt.show()
 
 
 def initCentroids():
     return X.sample(n=kCluster)
 
 
-def visualize(centroids, labels, title):
+def visualize(centroids, clusters, title):
     plt.xlabel("Annual Income (k$)")
     plt.ylabel("Spending Score (1-100)")
     plt.title(title)
     plotColors = ["b", "g", "c", "m", "y", "k", "b", "g"]
 
     for i in range(kCluster):
-        data = X[labels == i]
+        data = X[clusters == i]
         plt.plot(
             data["Annual Income (k$)"],
             data["Spending Score (1-100)"],
@@ -51,10 +53,10 @@ def visualize(centroids, labels, title):
             markersize=8,
             label="centroid_" + str(i),
         )
-    # plt.show()
+    plt.show()
 
 
-def predictLabels(centroids):
+def predictCluster(centroids):
     # Calc distance between each data and currently centroids
     attribute = 1
     for centerIndex, centroidRow in centroids.iterrows():
@@ -68,26 +70,26 @@ def predictLabels(centroids):
         X[attribute] = distances  # Extend new attribute 'i'
         attribute = attribute + 1
 
-    # Get new predict labels
-    labels = []
+    # Get new predict clusters
+    clusters = []
     for xIndex, row in X.iterrows():
         minDistance = row[1]
-        label = 0
+        cluster = 0
         for i in range(kCluster):
             if row[i + 1] < minDistance:
                 minDistance = row[i + 1]
-                label = i
-        labels.append(label)  # labels run from 0 to K - 1
-    X["Cluster"] = labels
+                cluster = i
+        clusters.append(cluster)  # clusters run from 0 to K - 1
+    X["Cluster"] = clusters
 
-    return np.array(labels)
+    return np.array(clusters)
 
 
-def updateCentroids(labels):
+def findCentroids(clusters):
     annualIncomeMeans = []
     spendingScoreMeans = []
     for k in range(kCluster):
-        data = X[labels == k]
+        data = X[clusters == k]
         mean = np.mean(data, axis=0)
         annualIncomeMeans.append(mean["Annual Income (k$)"])
         spendingScoreMeans.append(mean["Spending Score (1-100)"])
@@ -110,32 +112,31 @@ def isSameCentroids(centroids, newCentroids):
     return diff == 0
 
 
-def kmeans(init_centes, init_labels):
-    centroids = init_centes
-    labels = init_labels
+def kmeans(initCentroids, initClusters):
+    centroids = initCentroids
+    clusters = initClusters
     attempt = 0
     while True:
-        labels = predictLabels(centroids)
-        visualize(centroids, labels, "Attempt " + str(attempt + 1) + ":")
-        newCentroids = updateCentroids(labels)
-        print(newCentroids)
+        clusters = predictCluster(centroids)
+        visualize(centroids, clusters, "Attempt " + str(attempt + 1) + ":")
+        newCentroids = findCentroids(clusters)
         if isSameCentroids(centroids, newCentroids):
+            visualize(centroids, clusters, "Final Result")
             break
         centroids = newCentroids
         attempt += 1
-    return (centroids, labels)
+    return (centroids, clusters)
 
 
 centroids = initCentroids()
 print("Init centroids:\n", centroids)
-init_labels = np.zeros(X.shape[0])
-centroids, labels = kmeans(centroids, init_labels)
+initClusters = np.zeros(X.shape[0])
+centroids, clusters = kmeans(centroids, initClusters)
 print("Final centroids:\n", centroids)
-print("Data with Cluster:\n")
-X.groupby("Cluster").apply(print)
 
-# 0           88.200000               17.114286
-# 1           86.538462               82.128205
-# 2           25.727273               79.363636
-# 3           26.304348               20.913043
-# 4           55.296296               49.518519
+# Print data with cluster
+# print("Data with Cluster:\n")
+# X.groupby("Cluster").apply(print)
+
+# Print cluster with number of element
+# print(X.groupby("Cluster").size())

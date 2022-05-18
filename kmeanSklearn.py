@@ -1,8 +1,11 @@
+from cProfile import label
 import pandas as pd
 import numpy as np
 import random as rd
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
+
+pd.options.mode.chained_assignment = None
 
 kCluster = 5
 
@@ -22,6 +25,7 @@ for c in centroids:
 centroidDF = pd.DataFrame(
     list(zip(annualIncomes, spendingScores)), columns=["Annual Income (k$)", "Spending Score (1-100)"]
 )
+
 
 # Display result
 plt.xlabel("Annual Income (k$)")
@@ -44,3 +48,8 @@ for i in range(kCluster):
         label="centroid_" + str(i),
     )
 plt.show()
+
+#  Result
+print("Final centroids:\n", centroidDF)
+X["Cluster"] = labels.labels_.tolist()
+print(X.groupby("Cluster").size())
