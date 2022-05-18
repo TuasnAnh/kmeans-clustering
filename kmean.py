@@ -4,8 +4,6 @@ import random as rd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-from sklearn import cluster
-
 pd.options.mode.chained_assignment = None
 
 
@@ -139,4 +137,4 @@ print("Final centroids:\n", centroids)
 # X.groupby("Cluster").apply(print)
 
 # Print cluster with number of element
-# print(X.groupby("Cluster").size())
+print(X.groupby("Cluster").size())
